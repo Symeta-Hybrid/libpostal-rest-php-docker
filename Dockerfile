@@ -11,10 +11,18 @@ RUN apt-get update && \
 # Install libpostal base
 RUN git clone https://github.com/openvenues/libpostal
 WORKDIR /libpostal
+
+# Use build args for architecture detection
+ARG TARGETARCH
+
+# Set configure flags based on architecture
 RUN ./bootstrap.sh && \
-    ./configure --datadir=/opt/libpostal/data && \
-    make 2>&1 | grep error && \
-    make install
+    if [ "$TARGETARCH" = "arm64" ]; then \
+        ./configure --disable-sse2 --datadir=/opt/libpostal/data; \
+    else \
+        ./configure --datadir=/opt/libpostal/data; \
+    fi && \
+    make && make install
 
 # Install libpostal PHP wrapper
 RUN apt-get update && apt-get install -y gpg-agent zip unzip && \
